@@ -31,42 +31,63 @@ public final class MusicGroupImpl implements MusicGroup {
 
     @Override
     public Stream<String> orderedSongNames() {
-        return null;
+        return this.songs.stream()
+            .map(Song::getSongName)
+            .sorted();
     }
 
     @Override
     public Stream<String> albumNames() {
-        return null;
+        return this.albums.keySet().stream();
     }
 
     @Override
     public Stream<String> albumInYear(final int year) {
-        return null;
+        return this.albums.entrySet().stream()
+            .filter(e -> e.getValue().equals(year))
+            .map(e -> e.getKey());
     }
 
     @Override
     public int countSongs(final String albumName) {
-        return -1;
+        return  (int) this.songs.stream()
+            .filter(s -> s.getAlbumName().filter(name -> name.equals(albumName)).isPresent())
+            .count();
     }
 
     @Override
     public int countSongsInNoAlbum() {
-        return -1;
+        return (int) this.songs.stream()
+            .filter(s -> s.getAlbumName().isEmpty())
+            .count();
     }
 
     @Override
     public OptionalDouble averageDurationOfSongs(final String albumName) {
-        return null;
+        return  OptionalDouble.of(
+            this.songs.stream()
+                .filter(s -> s.getAlbumName().isPresent())
+                .filter(s -> s.getAlbumName().get().equals(albumName))
+                .map(s -> s.getDuration())
+                .reduce(0.0, Double::sum) / this.countSongs(albumName)
+        );
     }
 
     @Override
     public Optional<String> longestSong() {
-        return null;
+        return this.songs.stream()
+            .max((s1, s2) -> Double.compare(s1.getDuration(), s2.getDuration()))
+            .map(s -> s.songName);
     }
 
     @Override
     public Optional<String> longestAlbum() {
-        return null;
+        return this.albums.keySet().stream()
+            .max((n1, n2) -> Double.compare(computeAlbumDuration(n1), computeAlbumDuration(n2)));
+    }
+
+    private double computeAlbumDuration(final String albumName) {
+        return averageDurationOfSongs(albumName).getAsDouble() * countSongs(albumName);
     }
 
     private static final class Song {
